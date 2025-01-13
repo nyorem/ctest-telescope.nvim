@@ -87,6 +87,56 @@ end
 --- @param test_name table
 --- @param json table
 --- @param settings ctest.settings
+local run_test_from_test_name = function(test_name, json, settings)
+    if json ~= nil then
+        local discovered_tests = json.tests
+
+        for _, test in ipairs(discovered_tests) do
+            local command = test.command
+            if command ~= nil then
+                if test_name == test.name then
+                    local properties = test.properties
+                    local working_dir = settings:get().dap_config.cwd or vim.fn.getcwd() -- Set default working_dir to cwd
+                    local program_path = table.remove(command, 1)
+
+                    if properties ~= nil then
+                        for _, property in ipairs(properties) do
+                            if property.name == "WORKING_DIRECTORY" then
+                                working_dir = property.value -- Update working_dir from ctest value
+                                break
+                            end
+                        end
+                    end
+
+                    local processed_commands = {}
+                    for _, arg in ipairs(command) do
+                        local processed_arg = string.gsub(arg, "%*", "\\*")
+                        table.insert(processed_commands, processed_arg)
+                    end
+
+                    local toggleterm = require("toggleterm")
+                    local id = 1
+                    local size = 0.5 * vim.o.columns
+                    local direction = "vertical"
+                    local name = "ctest"
+                    local go_back = true -- go back to original window
+                    local open = true -- open terminal
+                    local cmd = program_path
+                    for _, arg in pairs(processed_commands) do
+                        cmd = cmd .. " " .. arg
+                    end
+                    toggleterm.exec(cmd, id, size, working_dir, direction, name, go_back, open)
+
+                    break
+                end
+            end
+        end
+    end
+end
+
+--- @param test_name table
+--- @param json table
+--- @param settings ctest.settings
 local run_dap_test_from_test_name = function(test_name, json, settings)
     local dap = require("dap")
 
@@ -185,6 +235,14 @@ function App:pick_test_and_debug(opts)
     if json ~= nil then
         local test_list = get_test_list_from_json(json)
         telescope_select_test_from_list(opts, test_list, json, self.settings, run_dap_test_from_test_name)
+    end
+end
+
+function App:run_test(opts)
+    local json = get_ctest_json(self.settings)
+    if json ~= nil then
+        local test_list = get_test_list_from_json(json)
+        telescope_select_test_from_list(opts, test_list, json, self.settings, run_test_from_test_name)
     end
 end
 

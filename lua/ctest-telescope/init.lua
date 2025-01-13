@@ -13,4 +13,8 @@ function Ctest.pick_test_and_debug()
     return Ctest.app():pick_test_and_debug()
 end
 
+function Ctest.run_test()
+    return Ctest.app():run_test()
+end
+
 return Ctest
