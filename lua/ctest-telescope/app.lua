@@ -114,19 +114,12 @@ local run_test_from_test_name = function(test_name, json, settings)
                         table.insert(processed_commands, processed_arg)
                     end
 
-                    local toggleterm = require("toggleterm")
-                    local id = 1
-                    local size = 0.5 * vim.o.columns
-                    local direction = "vertical"
-                    local name = "ctest"
-                    local go_back = true -- go back to original window
-                    local open = true -- open terminal
                     local cmd = program_path
                     for _, arg in pairs(processed_commands) do
                         cmd = cmd .. " " .. arg
                     end
-                    toggleterm.exec(cmd, id, size, working_dir, direction, name, go_back, open)
 
+                    vim.cmd("botright vertical Compile " .. cmd)
                     break
                 end
             end
